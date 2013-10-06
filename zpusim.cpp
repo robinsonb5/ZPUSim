@@ -8,8 +8,7 @@
 #include "debug.h"
 
 #define STACKSIZE 1024
-// #define STACKOFFSET 0x04000000
- #define STACKOFFSET 0x00000000
+int STACKOFFSET=0;
 
 // FIXME - make memory-mapped stack optional.
 // FIXME - replicate core generic options.
@@ -268,7 +267,7 @@ class ZPUSim
 					printf("    -m --minimal\t  Use emulation code for optional instructions\n");
 					break;
 				case 'b':
-					initpc=0x04000000;
+					STACKOFFSET=initpc=0x04000000;
 					break;
 				case 's':
 					steps=atoi(optarg);
@@ -589,7 +588,7 @@ class ZPUSim
 				{
 					int op=opcode&0x1f;
 					Push(pc+1);
-					nextpc=op*32;
+					nextpc=(pc&STACKOFFSET)|op*32;
 					mnem<<"emulate ";
 					mnem<<op;
 				}

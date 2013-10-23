@@ -253,7 +253,7 @@ class ZPUSim
 		while(1)
 		{
 			int c;
-			c = getopt_long(argc,argv,"hs:r:bm",long_options,NULL);
+			c = getopt_long(argc,argv,"hs:r:obm",long_options,NULL);
 			if(c==-1)
 				break;
 			switch (c)
@@ -263,11 +263,15 @@ class ZPUSim
 					printf("    -h --help\t  display this message\n");
 					printf("    -s --steps\t  Simulate a specific number of steps (default: indefinite)\n");
 					printf("    -r --report\t  set reporting level - 0 for silent, 4 for verbose\n");
-					printf("    -b --boot\t  set initial PC to boot ROM\n");
+					printf("    -o --offsetstack\t  stack RAM is at 0x04000000 rather than 0\n");
+					printf("    -b --boot\t  set initial PC to start of stack RAM\n");
 					printf("    -m --minimal\t  Use emulation code for optional instructions\n");
 					break;
+				case 'o':
+					STACKOFFSET=0x04000000;
+					break;
 				case 'b':
-					STACKOFFSET=initpc=0x04000000;
+					initpc=0x04000000;
 					break;
 				case 's':
 					steps=atoi(optarg);
@@ -302,6 +306,7 @@ class ZPUSim
 //			return((unsigned char)prg[pc]);
 	}
 
+	// FIXME - deal with program sizes that aren't multiples of 4.
 	void CopyProgramToStack(ZPUProgram &prg)
 	{
 		int s=prg.GetSize()*4;

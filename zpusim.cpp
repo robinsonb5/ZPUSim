@@ -10,8 +10,9 @@
 #define STACKSIZE 1024
 int STACKOFFSET=0;
 
-// FIXME - make memory-mapped stack optional.
 // FIXME - replicate core generic options.
+// FIXME - need to implement [load|store][b|h]
+
 
 class ZPUStack
 {
@@ -245,15 +246,19 @@ class ZPUSim
 			{"help",no_argument,NULL,'h'},
 			{"steps",required_argument,NULL,'s'},
 			{"boot",no_argument,NULL,'b'},
+			{"offset",required_argument,NULL,'o'},
 			{"report",required_argument,NULL,'r'},
 			{"minimal",no_argument,NULL,'m'},
 			{0, 0, 0, 0}
 		};
+		bool offset=false;
+		int stackbit=30;
+		bool stackboot=false;
 
 		while(1)
 		{
 			int c;
-			c = getopt_long(argc,argv,"hs:r:obm",long_options,NULL);
+			c = getopt_long(argc,argv,"hs:r:o:bm",long_options,NULL);
 			if(c==-1)
 				break;
 			switch (c)
@@ -263,15 +268,17 @@ class ZPUSim
 					printf("    -h --help\t  display this message\n");
 					printf("    -s --steps\t  Simulate a specific number of steps (default: indefinite)\n");
 					printf("    -r --report\t  set reporting level - 0 for silent, 4 for verbose\n");
-					printf("    -o --offsetstack\t  stack RAM is at 0x04000000 rather than 0\n");
+					printf("    -o --offsetstack\t  specify base address for stack RAM. Zero by default,\n");
+					printf("\t\t  specified as a bit number, so 30=0x40000000, etc.\n");
 					printf("    -b --boot\t  set initial PC to start of stack RAM\n");
 					printf("    -m --minimal\t  Use emulation code for optional instructions\n");
 					break;
 				case 'o':
-					STACKOFFSET=0x04000000;
+					offset=true;
+					stackbit=atoi(optarg);
 					break;
 				case 'b':
-					initpc=0x04000000;
+					stackboot=true;
 					break;
 				case 's':
 					steps=atoi(optarg);
@@ -284,6 +291,17 @@ class ZPUSim
 					break;
 			}
 		}
+		if(offset)
+		{
+			Debug[TRACE] << "Stack offset of " << (1<<stackbit) << " specified." << std::endl;
+			STACKOFFSET=1<<stackbit;
+			if(stackboot)
+			{
+				Debug[TRACE] << "Initial program counter set to " << STACKOFFSET << std::endl;
+				initpc=STACKOFFSET;
+			}
+		}
+
 		return(optind);
 	}
 

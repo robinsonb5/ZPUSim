@@ -49,7 +49,7 @@ class BinaryBlob
 
 		Debug[TRACE] << "Loading binary blob " << filename << " of size: " << size << std::endl;
 
-		pointer=(unsigned char *)malloc(size);
+		pointer=(unsigned char *)malloc((size+3)&~3); 		// HACK - round up to the nearest longword boundary.
 		owned=true;
 		size_t readlen = fread(pointer, 1, size, f);
 		fclose(f);

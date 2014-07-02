@@ -188,7 +188,7 @@ class ZPUProgram : public BinaryBlob, public ZPUMemory
 	}
 	virtual int Read(unsigned int addr)
 	{
-		if(((addr-base)>0) && ((addr-base)<(size-3)))
+		if(((addr-base)>=0) && ((addr-base)<(size-3)))
 		{
 			int r=(*this)[addr]<<24;
 			r|=(*this)[addr+1]<<16;
@@ -201,7 +201,7 @@ class ZPUProgram : public BinaryBlob, public ZPUMemory
 	}
 	virtual void Write(unsigned int addr,int v)
 	{
-		if(((addr-base)>0) && ((addr-base)<(size-3)))
+		if(((addr-base)>=0) && ((addr-base)<(size-3)))
 		{
 			(*this)[addr]=(v>>24)&255;
 			(*this)[addr+1]=(v>>16)&255;
@@ -309,16 +309,19 @@ class ZPUSim
 
 	int GetOpcode(ZPUMemory &prg, int pc)
 	{
+		Debug[TRACE] << "Fetching opcode at " << pc << std::endl;
 		if((pc<0x80000000) && ((pc&STACKOFFSET) || (STACKOFFSET==0)))
 		{
 			int t=stack[pc&~3];
 			int opcode=t>>((3-(pc&3))<<3);
+			Debug[TRACE] << "(stack)" << std::endl;
 			return(opcode&0xff);
 		}
 		else
 		{
 			int t=prg.Read(pc&~3);
 			int opcode=t>>((3-(pc&3))<<3);
+			Debug[TRACE] << "(RAM)" << std::endl;
 			return(opcode&0xff);
 		}
 //			return((unsigned char)prg[pc]);
@@ -327,7 +330,7 @@ class ZPUSim
 	// FIXME - deal with program sizes that aren't multiples of 4.
 	void CopyProgramToStack(ZPUProgram &prg)
 	{
-		int s=prg.GetSize()*4;
+		int s=prg.GetSize();
 		int i=0;
 		while(i<s)
 		{
@@ -336,6 +339,7 @@ class ZPUSim
 			i+=4;
 		}
 	}
+
 
 	void Run(ZPUProgram &prg)
 	{

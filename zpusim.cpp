@@ -114,6 +114,7 @@ class ZPUMemory
 				}
 				break;
 			default:
+				Debug[TRACE] << std::endl << "Reading from RAM" << addr << std::endl;
 				if(addr<ramsize)
 					return(ram[addr/4]);
 		}
@@ -160,10 +161,15 @@ class ZPUMemory
 			case 0xffffffcc:
 				Debug[WARN] << std::endl << "Writing " << v << " to SPI_pump" << std::endl << std::endl;
 				break;
+
+			case 0xfffffffc:
+				Debug[WARN] << std::endl << "Breadcrumb " << std::endl << std::endl;
+				break;
+
 			default:
 				if(addr<ramsize)
 				{
-					Debug[WARN] << std::endl << "Writing " << v << " to RAM " << addr << std::endl;
+					Debug[TRACE] << std::endl << "Writing " << v << " to RAM " << addr << std::endl;
 					ram[addr/4]=v;
 				}
 		}
@@ -176,6 +182,10 @@ class ZPUMemory
 	const char *uartin;
 };
 
+
+// ZPUProgram overlays the program loaded from disk onto a fixed-size memory block.
+// Accesses within the program are sent directly to the binary blob.
+// Accesses beyond the program are passed to the ZPUMemory superclass.
 
 class ZPUProgram : public BinaryBlob, public ZPUMemory
 {
@@ -194,7 +204,6 @@ class ZPUProgram : public BinaryBlob, public ZPUMemory
 			r|=(*this)[addr+1]<<16;
 			r|=(*this)[addr+2]<<8;
 			r|=(*this)[addr+3];
-			Debug[WARN] << std::endl << "Reading from " << addr << std::endl;
 			return(r);
 		}
 		return(ZPUMemory::Read(addr));
@@ -207,7 +216,6 @@ class ZPUProgram : public BinaryBlob, public ZPUMemory
 			(*this)[addr+1]=(v>>16)&255;
 			(*this)[addr+2]=(v>>8)&255;
 			(*this)[addr+3]=v&255;
-			Debug[WARN] << std::endl << "Writing " << v << " to PRG " << addr << std::endl;
 		}
 		else
 			ZPUMemory::Write(addr,v);
@@ -309,19 +317,16 @@ class ZPUSim
 
 	int GetOpcode(ZPUMemory &prg, int pc)
 	{
-		Debug[TRACE] << "Fetching opcode at " << pc << std::endl;
 		if((pc<0x80000000) && ((pc&STACKOFFSET) || (STACKOFFSET==0)))
 		{
 			int t=stack[pc&~3];
 			int opcode=t>>((3-(pc&3))<<3);
-			Debug[TRACE] << "(stack)" << std::endl;
 			return(opcode&0xff);
 		}
 		else
 		{
 			int t=prg.Read(pc&~3);
 			int opcode=t>>((3-(pc&3))<<3);
-			Debug[TRACE] << "(RAM)" << std::endl;
 			return(opcode&0xff);
 		}
 //			return((unsigned char)prg[pc]);

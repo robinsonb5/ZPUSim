@@ -87,6 +87,7 @@ class ZPUMemory
 			case 0xffffffcc:
 				Debug[WARN] << std::endl << "Reading from SPI_PUMP" << std::endl << std::endl;
 				break;
+			case 0xda8000:
 			case 0xffffff84:
 			case 0xffffffc0:
 				Debug[WARN] << std::endl << "Reading from UART" << std::endl << std::endl;
@@ -115,8 +116,8 @@ class ZPUMemory
 				break;
 			default:
 				Debug[TRACE] << std::endl << "Reading from RAM" << addr << std::endl;
-				if(addr<ramsize)
-					return(ram[addr/4]);
+//				if(addr<ramsize)
+					return(ram[(addr&(ramsize-1))/4]);
 		}
 		return(0);
 	}
@@ -124,9 +125,11 @@ class ZPUMemory
 	{
 		switch(addr)
 		{
+			case 0xda8000:
+				v>>=16;
 			case 0xffffff84:
 			case 0xffffffc0:
-				if(v)
+				if(char(v))
 				{
 					Debug[WARN] << std::endl << "Writing " << char(v) << " to UART" << std::endl << std::endl;
 					std::cout << char(v);
@@ -167,11 +170,11 @@ class ZPUMemory
 				break;
 
 			default:
-				if(addr<ramsize)
-				{
+//				if(addr<ramsize)
+//				{
 					Debug[TRACE] << std::endl << "Writing " << v << " to RAM " << addr << std::endl;
-					ram[addr/4]=v;
-				}
+					ram[(addr&(ramsize-1))/4]=v;
+//				}
 		}
 	}
 	virtual unsigned char &operator[](const int idx)=0;
@@ -402,6 +405,7 @@ class ZPUSim
 				if(opcode==0)	// breakpoint
 				{
 					mnem<<("breakpoint");
+					run=false;
 					// Perhaps trigger a change in log level?
 				}
 				else if((opcode&0xf0)==0)	// opcodes with no immediate operand
@@ -627,8 +631,8 @@ class ZPUSim
 
 				if(steps>0)
 					run=(--steps)!=0;
-				else
-					run=true;
+//				else
+//					run=true;
 
 			}
 			Debug[TRACE] << "PC: " << pc << "\tOp:" << opcode << "\tSP: " << osp << ", " << sp << "\t" << mnem.str() << "\t";

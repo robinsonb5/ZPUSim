@@ -31,13 +31,13 @@ class ZPUStack
 	int &operator[](const int idx)
 	{
 		int i=(idx-STACKOFFSET)/4;
-		if(idx<STACKOFFSET)
-			Debug[ERROR] << "Stack pointer missing offset!";
 		while(i<0)
 		{
 			i+=size;
-			Debug[ERROR] << "Stack underflow!";
+			Debug[ERROR] << "Stack underflow!" << std::endl;
 		}
+		if(idx<STACKOFFSET)
+			Debug[ERROR] << "Stack pointer missing offset!" << std::endl;
 		if(i>=size)
 			return(err);
 //			Debug[WARN] << "Stack overflow!";

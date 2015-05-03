@@ -33,8 +33,11 @@ class ZPUStack
 		int i=(idx-STACKOFFSET)/4;
 		if(idx<STACKOFFSET)
 			Debug[ERROR] << "Stack pointer missing offset!";
-		if(i<0)
-			Debug[WARN] << "Stack underflow!";
+		while(i<0)
+		{
+			i+=size;
+			Debug[ERROR] << "Stack underflow!";
+		}
 		if(i>=size)
 			return(err);
 //			Debug[WARN] << "Stack overflow!";
